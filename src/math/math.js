@@ -26,6 +26,15 @@ define(function (require) {
     return new p5.Vector(this, arguments);
   };
 
+  /**
+   * Creates a new p5.Matrix (used for 3d transformations). 
+   * This provides a 4x4 (4 cols, 4 rows)matrix.
+   * @param {Array} [mat4] array literal of the matrix
+   */
+  p5.prototype.createMatrix = function(){
+    return new p5.Matrix(this, arguments);
+  };
+
   return p5;
 
 });
