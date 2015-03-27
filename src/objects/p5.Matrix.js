@@ -2,6 +2,7 @@
  * @module Math
  * @submodule Math
  * @requires constants
+ * @todo see methods below needing further implementation.
  */
 define(function (require) {
 
@@ -12,6 +13,8 @@ define(function (require) {
   var constants = require('constants');
 
   /**
+   * A class to describe a 4x4 matrix 
+   * for model and view matrix manipulation in the p5js webgl renderer.
    * @class p5.Matrix
    * @constructor
    * @param {Array} [mat4] array literal of our 4x4 matrix
@@ -111,13 +114,6 @@ define(function (require) {
       this.mat4[15] = transposeMatrix[15];
     }
     return this;
-  };
-  /**
-   * [invert description]
-   * @return {[type]} [description]
-   */
-  p5.Matrix.prototype.invert = function(){
-    //@TODO
   };
 
   /**
@@ -315,7 +311,7 @@ define(function (require) {
   p5.Matrix.prototype.rotateY = function(){};
   p5.Matrix.prototype.rotateZ = function(){};
   p5.Matrix.prototype.translate = function(){};
-
+  p5.Matrix.prototype.invert = function(){};
 
   return p5.Matrix;
 
