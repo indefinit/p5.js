@@ -1,7 +1,7 @@
 'use strict';
 
 var p5 = require('../core/core');
-require('./p5.Texture');
+// require('./p5.Texture');
 
 /**
 * [normal description]
@@ -54,11 +54,16 @@ p5.prototype.texture = function(image){
   //   image.height = _nextHighestPOT(image.height);
   // }
   if (image instanceof p5.Image) {
+    if(!_isPowerOf2(image.width) || !_isPowerOf2(image.height)){
+      image.width = _nextHighestPOT(image.width);
+      image.height = _nextHighestPOT(image.height);
+    }
     image.loadPixels();
-    var data = new Uint8Array(image.pixels);
+    // var data = new Uint8Array(image.pixels);
     gl.texImage2D(gl.TEXTURE_2D, 0,
       gl.RGBA, image.width, image.height,
-      0, gl.RGBA, gl.UNSIGNED_BYTE, data);
+      0, gl.RGBA, gl.UNSIGNED_BYTE,
+      image.drawingContext.getImageData(0,0,image.width, image.height));
   }
   //if param is a video
   else if (image instanceof p5.MediaElement){

@@ -463,7 +463,7 @@ p5.Matrix.prototype.rotate = function(a, axis){
  * @todo  finish implementing this method!
  * translates
  * @param  {Array} v vector to translate by
- * @return {p5.Matrix}                    this
+ * @return {void}
  */
 p5.Matrix.prototype.translate = function(v){
   var x = v[0],
@@ -477,6 +477,33 @@ p5.Matrix.prototype.translate = function(v){
     this.mat4[2] * x +this.mat4[6] * y +this.mat4[10] * z +this.mat4[14];
   this.mat4[15] =
     this.mat4[3] * x +this.mat4[7] * y +this.mat4[11] * z +this.mat4[15];
+};
+
+/**
+ * translates model view matrix on x-axis
+ * @param  {Number} x [description]
+ * @return {void}   [description]
+ */
+p5.Matrix.prototype.translateX = function(x){
+  this.translate([x,0,0]);
+};
+
+/**
+ * translates model view matrix on y-axis
+ * @param  {Number} y [description]
+ * @return {void}   [description]
+ */
+p5.Matrix.prototype.translateY = function(y){
+  this.translate([0,y,0]);
+};
+
+/**
+  * translates model view matrix on z-axis
+ * @param  {Number} z [description]
+ * @return {void}   [description]
+ */
+p5.Matrix.prototype.translateZ = function(z){
+  this.translate([0,0,z]);
 };
 
 p5.Matrix.prototype.rotateX = function(a){
