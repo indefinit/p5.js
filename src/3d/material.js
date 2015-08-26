@@ -16,7 +16,7 @@ p5.prototype.normalMaterial = function(){
  * @TODO refactor into its own p5.Texture class ||
  * create a texture hash map data structure to keep
  * track of active textures.
- * 
+ *
  * [textureMaterial description]
  * @return {[type]} [description]
  * @example
@@ -31,7 +31,7 @@ p5.prototype.normalMaterial = function(){
  * rotateZ(theta * mouseX * 0.001);
  * rotateX(theta * mouseX * 0.001);
  * rotateY(theta * mouseX * 0.001);
- * // pass image as texture
+ * // pass media as texture
  * texture(img);
  * box(40);
  * pop();
@@ -39,48 +39,60 @@ p5.prototype.normalMaterial = function(){
  * </code>
  * </div>
  */
-p5.prototype.texture = function(image){
+p5.prototype.texture = function(media){
   var gl = this._graphics.GL;
   var shaderProgram = this._graphics.getShader('normalVert',
     'textureFrag');
   gl.useProgram(shaderProgram);
   var tex = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, tex);
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+  var data;
+
 
   // Currently buggy, likely bc of p5 object types
-  // if(!this._isPowerOf2(image.width) || !this._isPowerOf2(image.height)){
-  //   image.width = _nextHighestPOT(image.width);
-  //   image.height = _nextHighestPOT(image.height);
+  // if(!this._isPowerOf2(media.width) || !this._isPowerOf2(media.height)){
+  //   media.width = _nextHighestPOT(media.width);
+  //   media.height = _nextHighestPOT(media.height);
   // }
-  if (image instanceof p5.Image) {
-    if(!_isPowerOf2(image.width) || !_isPowerOf2(image.height)){
-      image.width = _nextHighestPOT(image.width);
-      image.height = _nextHighestPOT(image.height);
+  if (media instanceof p5.Image) {
+    if(!_isPowerOf2(media.width) || !_isPowerOf2(media.height)){
+      media.width = _nextHighestPOT(media.width);
+      media.height = _nextHighestPOT(media.height);
     }
-    image.loadPixels();
-    // var data = new Uint8Array(image.pixels);
-    gl.texImage2D(gl.TEXTURE_2D, 0,
-      gl.RGBA, image.width, image.height,
-      0, gl.RGBA, gl.UNSIGNED_BYTE,
-      image.drawingContext.getImageData(0,0,image.width, image.height));
+    try {
+      // fetch pixels out of <canvas> drawing context consistently
+      data = new Uint8Array(media.drawingContext.getImageData(0, 0,
+                            media.width, media.height).data);
+
+    } catch (e) {
+      // bail out for now if the data isn't ready yet (synchronous atm)
+      return this;
+    }
   }
-  //if param is a video
-  else if (image instanceof p5.MediaElement){
-    if(!image.loadedmetadata) {return;}
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,
-    gl.UNSIGNED_BYTE, image.elt);
-  }
-  else {
+  //if param is a video (TODO: create p5.Video)
+  else if (media instanceof p5.MediaElement){
+    if (!media.loadedmetadata) { return this; }
+    if (!media.loadedVideoData) { return this; }
+
+    data = new Uint8Array(media.drawingContext.getImageData(0, 0,
+                          media.width, media.height).data);
+  } else {
     //@TODO handle following cases:
     //- 2D canvas (p5 inst)
+    return this;
   }
-  
-  if (_isPowerOf2(image.width) && _isPowerOf2(image.height)) {
+
+  // only do binding + apply texture if we get here
+
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, media.width, media.height,
+    0, gl.RGBA, gl.UNSIGNED_BYTE, data);
+
+  if (_isPowerOf2(media.width) && _isPowerOf2(media.height)) {
     gl.generateMipmap(gl.TEXTURE_2D);
   } else {
-    image.width = _nextHighestPOT(image.width);
-    image.height = _nextHighestPOT(image.height);
+    media.width = _nextHighestPOT(media.width);
+    media.height = _nextHighestPOT(media.height);
     gl.texParameteri(gl.TETXURE_2D,
       gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TETXURE_2D,

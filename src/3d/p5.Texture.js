@@ -1,6 +1,6 @@
 /**
  * TODO WIP, SORRY!!
- * 
+ *
  */
 // 'use strict';
 
@@ -42,7 +42,7 @@
 //     //@TODO handle following cases:
 //     //- 2D canvas (p5 inst)
 //   }
-  
+
 //   if (this._isPowerOf2(image.width) && this._isPowerOf2(image.height)) {
 //     gl.generateMipmap(gl.TEXTURE_2D);
 //   } else {
@@ -67,7 +67,7 @@
 //  * https://www.opengl.org/wiki/NPOT_Texture
 //  * @param  {Number}  value
 //  * @return {Boolean}
- 
+
 // p5.Texture.prototype._isPowerOf2 = function(value){
 //   return (value & (value - 1)) === 0;
 // };
