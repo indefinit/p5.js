@@ -31,26 +31,32 @@ p5.Renderer3D.prototype.initBuffer = function(gId, obj) {
 
   var shaderProgram = this.mHash[this.getCurShaderId()];
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, this.gHash[gId].vertexBuffer);
-  gl.bufferData(
-    gl.ARRAY_BUFFER, new Float32Array(obj.vertices), gl.STATIC_DRAW);
-  gl.vertexAttribPointer(
-    shaderProgram.vertexPositionAttribute,
-    3, gl.FLOAT, false, 0, 0);
+  if (shaderProgram.vertexPositionAttribute !== -1) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.gHash[gId].vertexBuffer);
+    gl.bufferData(
+      gl.ARRAY_BUFFER, new Float32Array(obj.vertices), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(
+      shaderProgram.vertexPositionAttribute,
+      3, gl.FLOAT, false, 0, 0);
+  }
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, this.gHash[gId].normalBuffer);
-  gl.bufferData(
-    gl.ARRAY_BUFFER, new Float32Array(obj.vertexNormals), gl.STATIC_DRAW);
-  gl.vertexAttribPointer(
-    shaderProgram.vertexNormalAttribute,
-    3, gl.FLOAT, false, 0, 0);
+  if (shaderProgram.vertexNormalAttribute !== -1) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.gHash[gId].normalBuffer);
+    gl.bufferData(
+      gl.ARRAY_BUFFER, new Float32Array(obj.vertexNormals), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(
+      shaderProgram.vertexNormalAttribute,
+      3, gl.FLOAT, false, 0, 0);
+  }
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, this.gHash[gId].uvBuffer);
-  gl.bufferData(
-    gl.ARRAY_BUFFER, new Float32Array(obj.uvs), gl.STATIC_DRAW);
-  gl.vertexAttribPointer(
-    shaderProgram.textureCoordAttribute,
-    2, gl.FLOAT, false, 0, 0);
+  if (shaderProgram.textureCoordAttribute !== -1) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.gHash[gId].uvBuffer);
+    gl.bufferData(
+      gl.ARRAY_BUFFER, new Float32Array(obj.uvs), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(
+      shaderProgram.textureCoordAttribute,
+      2, gl.FLOAT, false, 0, 0);
+  }
 
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.gHash[gId].indexBuffer);
   gl.bufferData
@@ -66,20 +72,26 @@ p5.Renderer3D.prototype.drawBuffer = function(gId) {
   var shaderKey = this.getCurShaderId();
   var shaderProgram = this.mHash[shaderKey];
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, this.gHash[gId].vertexBuffer);
-  gl.vertexAttribPointer(
-    shaderProgram.vertexPositionAttribute,
-    3, gl.FLOAT, false, 0, 0);
+  if (shaderProgram.vertexPositionAttribute !== -1) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.gHash[gId].vertexBuffer);
+    gl.vertexAttribPointer(
+      shaderProgram.vertexPositionAttribute,
+      3, gl.FLOAT, false, 0, 0);
+  }
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, this.gHash[gId].normalBuffer);
-  gl.vertexAttribPointer(
-    shaderProgram.vertexNormalAttribute,
-    3, gl.FLOAT, false, 0, 0);
+  if (shaderProgram.vertexNormalAttribute !== -1) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.gHash[gId].normalBuffer);
+    gl.vertexAttribPointer(
+      shaderProgram.vertexNormalAttribute,
+      3, gl.FLOAT, false, 0, 0);
+  }
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, this.gHash[gId].uvBuffer);
-  gl.vertexAttribPointer(
-    shaderProgram.textureCoordAttribute,
-    2, gl.FLOAT, false, 0, 0);
+  if (shaderProgram.textureCoordAttribute !== -1) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.gHash[gId].uvBuffer);
+    gl.vertexAttribPointer(
+      shaderProgram.textureCoordAttribute,
+      2, gl.FLOAT, false, 0, 0);
+  }
 
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.gHash[gId].indexBuffer);
 

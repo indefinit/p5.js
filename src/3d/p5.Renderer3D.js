@@ -187,21 +187,35 @@ p5.Renderer3D.prototype.getLocation = function(shaderProgram, immediateMode) {
   //@TODO: figure out a better way instead of if statement
   if(immediateMode === undefined){
     //vertex normal Attribute
-    shaderProgram.vertexNormalAttribute =
+    var vertexNormalAttribLocation =
       gl.getAttribLocation(shaderProgram, 'aNormal');
-    gl.enableVertexAttribArray(shaderProgram.vertexNormalAttribute);
+    shaderProgram.vertexNormalAttribute = vertexNormalAttribLocation;
+    if (vertexNormalAttribLocation !== -1) {
+
+      gl.enableVertexAttribArray(shaderProgram.vertexNormalAttribute);
+    }
 
     //normal Matrix uniform
-    shaderProgram.uNMatrixUniform =
-    gl.getUniformLocation(shaderProgram, 'uNormalMatrix');
+    var uNormalMatrixLocation =
+      gl.getUniformLocation(shaderProgram, 'uNormalMatrix');
+    if (uNormalMatrixLocation !== -1) {
+      shaderProgram.uNMatrixUniform = uNormalMatrixLocation;
+    }
 
     //texture coordinate Attribute
-    shaderProgram.textureCoordAttribute =
+    var aTexCoordAttribLocation =
       gl.getAttribLocation(shaderProgram, 'aTexCoord');
-    gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
+    shaderProgram.textureCoordAttribute = aTexCoordAttribLocation;
+    if (aTexCoordAttribLocation !== -1) {
 
-    shaderProgram.samplerUniform =
-    gl.getUniformLocation(shaderProgram, 'uSampler');
+      gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
+    }
+
+    var samplerUniformLocation =
+      gl.getUniformLocation(shaderProgram, 'uSampler');
+    if (samplerUniformLocation !== -1) {
+      shaderProgram.samplerUniform = samplerUniformLocation;
+    }
   }
 };
 
