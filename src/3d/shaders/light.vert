@@ -1,3 +1,4 @@
+//lightVert
 attribute vec3 aPosition;
 attribute vec3 aNormal;
 attribute vec2 aTexCoord;
@@ -15,7 +16,6 @@ uniform vec3 uLightingDirection[8];
 uniform vec3 uDirectionalColor[8];
 uniform vec3 uPointLightLocation[8];
 uniform vec3 uPointLightColor[8];
-uniform bool uSpecular;
 
 varying vec3 vVertexNormal;
 varying vec2 vVertTexCoord;
@@ -49,8 +49,8 @@ void main(void){
 
   for(int j = 0; j < 8; j++){
     if(uDirectionalLightCount == j) break;
-    vec3 dir = uLightingDirection[j];
-    float directionalLightWeighting = max(dot(vertexNormal, dir), 0.0);
+    vec3 dir = -uLightingDirection[j];
+    float directionalLightWeighting = max(dot(dir, vertexNormal), 0.0);
     directionalLightFactor += uDirectionalColor[j] * directionalLightWeighting;
   }
 
@@ -62,19 +62,18 @@ void main(void){
 
     float directionalLightWeighting = max(dot(vertexNormal, lightDirection), 0.0);
     pointLightFactor += uPointLightColor[k] * directionalLightWeighting;
-
+#ifdef IS_SPECULAR
     //factor2 for specular
     vec3 reflectionDirection = reflect(-lightDirection, vertexNormal);
     float specularLightWeighting = pow(max(dot(reflectionDirection, eyeDirection), 0.0), shininess);
-
     pointLightFactor2 += uPointLightColor[k] * (specularFactor * specularLightWeighting
       +  directionalLightWeighting * diffuseFactor);
+#endif
   }
   
-  if(!uSpecular){
-    vLightWeighting =  ambientLightFactor + directionalLightFactor + pointLightFactor;
-  }else{
+  #ifdef IS_SPECULAR
     vLightWeighting = ambientLightFactor + directionalLightFactor + pointLightFactor2;
-  }
-
+  #else
+    vLightWeighting =  ambientLightFactor + directionalLightFactor + pointLightFactor;
+  #endif
 }

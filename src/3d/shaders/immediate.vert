@@ -1,3 +1,4 @@
+//immediateVert
 attribute vec3 aPosition;
 attribute vec4 aVertexColor;
 

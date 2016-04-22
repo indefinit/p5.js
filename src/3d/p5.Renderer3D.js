@@ -118,23 +118,19 @@ p5.Renderer3D.prototype.background = function() {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 };
 
-//@TODO implement this
-// p5.Renderer3D.prototype.clear = function() {
-//@TODO
-// };
-
 //////////////////////////////////////////////
 // SHADER
 //////////////////////////////////////////////
 
 /**
  * [_initShaders description]
- * @param  {string} vertId [description]
- * @param  {string} fragId [description]
+ * @param  {string} vert [description]
+ * @param  {string} frag [description]
+ * @param {bool} isId is argument shader string or id
  * @return {[type]}        [description]
  */
 p5.Renderer3D.prototype._initShaders =
-function(vertId, fragId, isImmediateMode) {
+function(vert, frag, isImmediateMode, isId) {
   var gl = this.GL;
   //set up our default shaders by:
   // 1. create the shader,
@@ -142,7 +138,12 @@ function(vertId, fragId, isImmediateMode) {
   // 3. compile the shader
   var _vertShader = gl.createShader(gl.VERTEX_SHADER);
   //load in our default vertex shader
-  gl.shaderSource(_vertShader, shader[vertId]);
+  if(isId){
+    gl.shaderSource(_vertShader, shader[vert]);
+  }
+  else {
+    gl.shaderSource(_vertShader, vert);
+  }
   gl.compileShader(_vertShader);
   // if our vertex shader failed compilation?
   if (!gl.getShaderParameter(_vertShader, gl.COMPILE_STATUS)) {
@@ -153,7 +154,12 @@ function(vertId, fragId, isImmediateMode) {
 
   var _fragShader = gl.createShader(gl.FRAGMENT_SHADER);
   //load in our material frag shader
-  gl.shaderSource(_fragShader, shader[fragId]);
+  if(isId){
+    gl.shaderSource(_fragShader, shader[frag]);
+  }
+  else {
+    gl.shaderSource(_fragShader, frag);
+  }
   gl.compileShader(_fragShader);
   // if our frag shader failed compilation?
   if (!gl.getShaderParameter(_fragShader, gl.COMPILE_STATUS)) {
@@ -242,11 +248,30 @@ p5.Renderer3D.prototype._setMatrixUniforms = function(shaderKey) {
 //////////////////////////////////////////////
 // GET CURRENT | for shader and color
 //////////////////////////////////////////////
-p5.Renderer3D.prototype._getShader = function(vertId, fragId, isImmediateMode) {
-  var mId = vertId + '|' + fragId;
+/**
+ * returns a raw shader as string for direct manipulation
+ * @param  {String} key lookup for shader object in shader.js
+ * @return {String}     A single shader as string
+ * @private
+ */
+p5.Renderer3D.prototype._getShaderString = function(key) {
+  return shader[key];
+};
+
+p5.Renderer3D.prototype._getShader =
+function(vert, frag, isImmediateMode, isId) {
+  var mId;
+  if(isId){
+    mId = vert + '|' + frag;
+  } else {
+    var vertId = vert.split(/(?:\n|\r)+/)[0];
+    var fragId = frag.split(/(?:\n|\r)+/)[0];
+    mId = vertId + '|' + fragId;
+  }
   //create it and put it into hashTable
   if(!this.materialInHash(mId)){
-    var shaderProgram = this._initShaders(vertId, fragId, isImmediateMode);
+    var shaderProgram =
+    this._initShaders(vert, frag, isImmediateMode, isId);
     this.mHash[mId] = shaderProgram;
   }
   this.curShaderId = mId;
@@ -260,12 +285,14 @@ p5.Renderer3D.prototype._getCurShaderId = function(){
   if(this.drawMode !== 'fill' && this.curShaderId === undefined){
     //default shader: normalMaterial()
     mId = 'normalVert|normalFrag';
-    shaderProgram = this._initShaders('normalVert', 'normalFrag');
+    shaderProgram =
+    this._initShaders('normalVert', 'normalFrag', false, true);
     this.mHash[mId] = shaderProgram;
     this.curShaderId = mId;
   } else if(this.isImmediateDrawing && this.drawMode === 'fill'){
     mId = 'immediateVert|vertexColorFrag';
-    shaderProgram = this._initShaders('immediateVert', 'vertexColorFrag');
+    shaderProgram =
+    this._initShaders('immediateVert', 'vertexColorFrag', false, true);
     this.mHash[mId] = shaderProgram;
     this.curShaderId = mId;
   }
@@ -312,11 +339,11 @@ p5.Renderer3D.prototype.fill = function(v1, v2, v3, a) {
   this.drawMode = 'fill';
   if(this.isImmediateDrawing){
     shaderProgram =
-    this._getShader('immediateVert','vertexColorFrag');
+    this._getShader('immediateVert','vertexColorFrag', true, true);
     gl.useProgram(shaderProgram);
   } else {
     shaderProgram =
-    this._getShader('normalVert', 'basicFrag');
+    this._getShader('normalVert', 'basicFrag', false, true);
     gl.useProgram(shaderProgram);
     //RetainedMode uses a webgl uniform to pass color vals
     //in ImmediateMode, we want access to each vertex so therefore

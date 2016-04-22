@@ -38,7 +38,7 @@ require('./p5.Geometry');
  * </code>
  * </div>
  */
-p5.prototype.loadModel = function ( path ) {
+p5.prototype.loadModel = function ( path, cb ) {
   var model = new p5.Geometry();
   model.gid = path;
   this.loadStrings(path, function(strings) {

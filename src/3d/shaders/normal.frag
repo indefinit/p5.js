@@ -1,3 +1,4 @@
+//normalFrag
 precision mediump float;
 varying vec3 vVertexNormal;
 void main(void) {

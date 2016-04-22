@@ -30,7 +30,7 @@ var p5 = require('../core/core');
  * </div>
  */
 p5.prototype.normalMaterial = function(){
-  this._renderer._getShader('normalVert', 'normalFrag');
+  this._renderer._getShader('normalVert', 'normalFrag', false, true);
   return this;
 };
 
@@ -61,8 +61,13 @@ p5.prototype.normalMaterial = function(){
  */
 p5.prototype.texture = function(image){
   var gl = this._renderer.GL;
-  var shaderProgram = this._renderer._getShader('lightVert',
-    'lightTextureFrag');
+  var vertShaderStr = this._renderer._getShaderString('lightVert');
+  var fragShaderStr = this._renderer._getShaderString('lightTextureFrag');
+  fragShaderStr = fragShaderStr
+    .replace(/^/, '//lightTextureFrag\n#define IS_TEXTURE\n');
+
+  var shaderProgram = this._renderer._getShader(vertShaderStr,
+    fragShaderStr, false, false);
   gl.useProgram(shaderProgram);
   if (image instanceof p5.Image) {
     //check if image is already used as texture
@@ -117,7 +122,6 @@ p5.prototype.texture = function(image){
   //gl.activeTexture(gl.TEXTURE0 + 0);
   //gl.bindTexture(gl.TEXTURE_2D, tex);
   gl.uniform1i(gl.getUniformLocation(shaderProgram, 'uSampler'), 0);
-  gl.uniform1i(gl.getUniformLocation(shaderProgram, 'isTexture'), true);
   return this;
 };
 
@@ -173,8 +177,7 @@ function _isPowerOf2 (value){
 p5.prototype.ambientMaterial = function(v1, v2, v3, a) {
   var gl = this._renderer.GL;
   var shaderProgram =
-    this._renderer._getShader('lightVert', 'lightTextureFrag');
-
+    this._renderer._getShader('lightVert', 'lightTextureFrag', false, true);
   gl.useProgram(shaderProgram);
   shaderProgram.uMaterialColor = gl.getUniformLocation(
     shaderProgram, 'uMaterialColor' );
@@ -182,13 +185,6 @@ p5.prototype.ambientMaterial = function(v1, v2, v3, a) {
 
   gl.uniform4f(shaderProgram.uMaterialColor,
     colors[0], colors[1], colors[2], colors[3]);
-
-  shaderProgram.uSpecular = gl.getUniformLocation(
-    shaderProgram, 'uSpecular' );
-  gl.uniform1i(shaderProgram.uSpecular, false);
-
-  gl.uniform1i(gl.getUniformLocation(shaderProgram, 'isTexture'), false);
-
   return this;
 };
 
@@ -220,18 +216,19 @@ p5.prototype.ambientMaterial = function(v1, v2, v3, a) {
  */
 p5.prototype.specularMaterial = function(v1, v2, v3, a) {
   var gl = this._renderer.GL;
+  //use defines instead of conditional branching in shader
+  var vertShaderStr = this._renderer._getShaderString('lightVert');
+  vertShaderStr = vertShaderStr
+    .replace(/^/, '//lightVertSpecular\n#define IS_SPECULAR\n');
+  var fragShaderStr = this._renderer._getShaderString('lightTextureFrag');
   var shaderProgram =
-    this._renderer._getShader('lightVert', 'lightTextureFrag');
+    this._renderer._getShader(vertShaderStr, fragShaderStr, false, false);
   gl.useProgram(shaderProgram);
-  gl.uniform1i(gl.getUniformLocation(shaderProgram, 'isTexture'), false);
   shaderProgram.uMaterialColor = gl.getUniformLocation(
     shaderProgram, 'uMaterialColor' );
   var colors = this._renderer._applyColorBlend(v1,v2,v3,a);
   gl.uniform4f(shaderProgram.uMaterialColor,
     colors[0], colors[1], colors[2], colors[3]);
-  shaderProgram.uSpecular = gl.getUniformLocation(
-    shaderProgram, 'uSpecular' );
-  gl.uniform1i(shaderProgram.uSpecular, true);
 
   return this;
 };
