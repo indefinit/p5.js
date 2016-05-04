@@ -68,16 +68,6 @@ p5.prototype.arc = function(x, y, w, h, start, stop, mode) {
   for (var i = 0; i < args.length; ++i) {
     args[i] = arguments[i];
   }
-  this._validateParameters(
-    'arc',
-    args,
-    [
-      ['Number', 'Number', 'Number', 'Number', 'Number', 'Number'],
-      [ 'Number', 'Number', 'Number', 'Number',
-        'Number', 'Number', 'String' ]
-    ]
-  );
-
   if (!this._renderer._doStroke && !this._renderer._doFill) {
     return this;
   }
@@ -149,34 +139,28 @@ p5.prototype.arc = function(x, y, w, h, start, stop, mode) {
  * </code>
  * </div>
  */
+/**
+ * @method ellipse
+ * @param {Number} x x-coordinate of the ellipse.
+ * @param {Number} y y-coordinate of the ellipse.
+ * @param {Number} z z-coordinate of the ellipse.
+ * @param {Number} w width of the ellipse.
+ * @param {Number} h height of the ellipse.
+ * @return {p5}       the p5 object
+ */
 p5.prototype.ellipse = function() {
   var args = new Array(arguments.length);
   for (var i = 0; i < args.length; ++i) {
     args[i] = arguments[i];
   }
   if(this._renderer.isP3D){
-    this._validateParameters(
-      'ellipse',
-      args,
-      ['Number',
-      'Number',
-      'Number',
-      'Number',
-      'Number'
-      ]
-    );
     // p5 supports negative width and heights for ellipses
-    args[3] = Math.abs(args[3]);
-    args[4] = Math.abs(args[4]);
+    if (args[3] < 0){args[3] = Math.abs(args[3]);}
+    if (args[4] < 0){args[4] = Math.abs(args[4]);}
   } else {
-    this._validateParameters(
-      'ellipse',
-      args,
-      ['Number', 'Number', 'Number', 'Number']
-    );
-    // p5 supports negative width and heights for ellipses
-    args[2] = Math.abs(args[2]);
-    args[3] = Math.abs(args[3]);
+    // p5 supports negative width and heights for rects
+    if (args[2] < 0){args[2] = Math.abs(args[2]);}
+    if (args[3] < 0){args[3] = Math.abs(args[3]);}
   }
   if (!this._renderer._doStroke && !this._renderer._doFill) {
     return this;
@@ -242,13 +226,6 @@ p5.prototype.line = function() {
   }
   //check whether we should draw a 3d line or 2d
   if(this._renderer.isP3D){
-    this._validateParameters(
-      'line',
-      args,
-      [
-        ['Number', 'Number', 'Number', 'Number', 'Number', 'Number']
-      ]
-    );
     this._renderer.line(
       args[0],
       args[1],
@@ -257,13 +234,6 @@ p5.prototype.line = function() {
       args[4],
       args[5]);
   } else {
-    this._validateParameters(
-      'line',
-      args,
-      [
-        ['Number', 'Number', 'Number', 'Number'],
-      ]
-    );
     this._renderer.line(
       args[0],
       args[1],
@@ -303,26 +273,12 @@ p5.prototype.point = function() {
   }
   //check whether we should draw a 3d line or 2d
   if(this._renderer.isP3D){
-    this._validateParameters(
-      'point',
-      args,
-      [
-        ['Number', 'Number', 'Number']
-      ]
-    );
     this._renderer.point(
       args[0],
       args[1],
       args[2]
       );
   } else {
-    this._validateParameters(
-      'point',
-      args,
-      [
-        ['Number', 'Number']
-      ]
-    );
     this._renderer.point(
       args[0],
       args[1]
@@ -356,6 +312,14 @@ p5.prototype.point = function() {
  * </code>
  * </div>
  */
+/**
+ * @method quad
+ * @param {Number} z1 the z-coordinate of the first point
+ * @param {Number} z2 the z-coordinate of the second point
+ * @param {Number} z3 the z-coordinate of the third point
+ * @param {Number} z4 the z-coordinate of the fourth point
+ * @return {p5} the p5 object
+ */
 p5.prototype.quad = function() {
   if (!this._renderer._doStroke && !this._renderer._doFill) {
     return this;
@@ -365,16 +329,6 @@ p5.prototype.quad = function() {
     args[i] = arguments[i];
   }
   if(this._renderer.isP3D){
-    this._validateParameters(
-      'quad',
-      args,
-      [
-        [ 'Number', 'Number', 'Number',
-          'Number', 'Number', 'Number',
-          'Number', 'Number', 'Number',
-          'Number', 'Number', 'Number']
-      ]
-    );
     this._renderer.quad(
       args[0],
       args[1],
@@ -390,14 +344,6 @@ p5.prototype.quad = function() {
       args[11]
       );
   } else {
-    this._validateParameters(
-      'quad',
-      args,
-      [
-        [ 'Number', 'Number', 'Number', 'Number',
-          'Number', 'Number', 'Number', 'Number' ]
-      ]
-    );
     this._renderer.quad(
      args[0],
      args[1],
@@ -453,34 +399,33 @@ p5.prototype.quad = function() {
 * <code>
 * // Draw a rectangle with rounded corners having the following radii:
 * // top-left = 20, top-right = 15, bottom-right = 10, bottom-left = 5.
-* rect(30, 20, 55, 55, 20, 15, 10, 5)
+* rect(30, 20, 55, 55, 20, 15, 10, 5);
 * </code>
 * </div>
 */
-p5.prototype.rect = function (x, y, w, h, tl, tr, br, bl) {
+/**
+* @method rect
+* @param  {Number} z  z-coordinate of the rectangle.
+* @return {p5}          the p5 object.
+*/
+p5.prototype.rect = function () {
   var args = new Array(arguments.length);
   for (var i = 0; i < args.length; ++i) {
     args[i] = arguments[i];
   }
-  this._validateParameters(
-    'rect',
-    args,
-    [
-      ['Number', 'Number', 'Number', 'Number'],
-      ['Number', 'Number', 'Number', 'Number', 'Number'],
-      ['Number', 'Number', 'Number', 'Number',
-       'Number', 'Number', 'Number', 'Number']
-    ]
-  );
-
+  if(this._renderer.isP3D){
+    // p5 supports negative width and heights for rects
+    if (args[3] < 0){args[3] = Math.abs(args[3]);}
+    if (args[4] < 0){args[4] = Math.abs(args[4]);}
+  } else {
+    // p5 supports negative width and heights for rects
+    if (args[2] < 0){args[2] = Math.abs(args[2]);}
+    if (args[3] < 0){args[3] = Math.abs(args[3]);}
+  }
   if (!this._renderer._doStroke && !this._renderer._doFill) {
     return;
   }
-  if (this._renderer.isP3D){
-    this._renderer.rect(args);
-  } else {
-    this._renderer.rect(x, y, w, h, tl, tr, br, bl);
-  }
+  this._renderer.rect(args);
   return this;
 };
 
@@ -514,23 +459,8 @@ p5.prototype.triangle = function() {
     args[i] = arguments[i];
   }
   if(this._renderer.isP3D){
-    this._validateParameters(
-      'triangle',
-      args,
-      [
-        ['Number', 'Number', 'Number', 'Number', 'Number', 'Number',
-         'Number', 'Number', 'Number']
-      ]
-    );
     this._renderer.triangle(args);
   } else {
-    this._validateParameters(
-      'triangle',
-      args,
-      [
-        ['Number', 'Number', 'Number', 'Number', 'Number', 'Number']
-      ]
-    );
     this._renderer.triangle(
       args[0],
       args[1],

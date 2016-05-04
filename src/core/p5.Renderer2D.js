@@ -550,7 +550,15 @@ p5.Renderer2D.prototype.quad =
   return this;
 };
 
-p5.Renderer2D.prototype.rect = function(x, y, w, h, tl, tr, br, bl) {
+p5.Renderer2D.prototype.rect = function(args) {
+  var x = args[0],
+    y = args[1],
+    w = args[2],
+    h = args[3],
+    tl = args[4],
+    tr = args[5],
+    br = args[6],
+    bl = args[7];
   var ctx = this.drawingContext;
   var doFill = this._doFill, doStroke = this._doStroke;
   if (doFill && !doStroke) {
@@ -1126,9 +1134,12 @@ p5.Renderer2D.prototype.text = function (str, x, y, maxWidth, maxHeight) {
     }
   }
   else {
+    //offset to account for centering multiple lines of text
+    var offset = ((cars.length)*0.5-0.5)*p.textLeading();
+
     for (jj = 0; jj < cars.length; jj++) {
 
-      this._renderText(p, cars[jj], x, y, finalMaxHeight);
+      this._renderText(p, cars[jj], x, y-offset, finalMaxHeight);
       y += p.textLeading();
     }
   }
