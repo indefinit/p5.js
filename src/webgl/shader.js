@@ -1,4 +1,42 @@
 var fs = require('fs');
+var p5 = require('../core/core');
+
+/**
+ * Creates a shader program
+ * @param {String} vertexShader a vertex shader
+ * @param {String} fragmentShader a frag shader
+ * @return {p5.Shader} [description]
+ */
+p5.prototype.createShader = function(){
+  var args = new Array(arguments.length);
+  for (var i = 0; i < args.length; ++i) {
+    args[i] = arguments[i];
+  }
+  return new p5.Shader(args);
+};
+//@todo
+p5.prototype.loadShader = function(vert,frag){
+  return this;
+};
+//@todo
+p5.prototype.shader = function(shaderProgram){
+  return this;
+};
+
+p5.Shader = function(){
+  //@todo
+  return this;
+};
+
+/**
+ * @todo
+ */
+p5.Shader.prototype.setUniform = function(){};
+
+/**
+ * @todo
+ */
+p5.Shader.prototype.setDefine = function(){};
 
 module.exports = {
   immediateVert:
