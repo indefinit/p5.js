@@ -29,23 +29,28 @@ var constants = require('../core/constants');
  * @return {[type]}      [description]
  */
 p5.RendererGL.prototype.beginShape = function(mode){
+  var gl = this.GL;
   //default shape mode is line_strip
   this.immediateMode.shapeMode = (mode !== undefined ) ?
     mode : constants.LINE_STRIP;
   //if we haven't yet initialized our
   //immediateMode buffers, create them now!
   if(this.immediateMode.vertexBuffer === undefined){
+<<<<<<< Updated upstream
     this.immediateMode.vertexBuffer = this.GL.createBuffer();
     this.immediateMode.colorBuffer = this.GL.createBuffer();
+=======
+    this.immediateMode.vertexBuffer = gl.createBuffer();
+    this.immediateMode.barycentricBuffer = gl.createBuffer();
+    this.immediateMode.strokeColorBuffer = gl.createBuffer();
+    this.immediateMode.fillColorBuffer = gl.createBuffer();
+
+>>>>>>> Stashed changes
   }
   this.isImmediateDrawing = true;
   return this;
 };
 
-/**
- * End shape drawing and render vertices to screen.
- * @return {p5.RendererGL} [description]
- */
 p5.RendererGL.prototype.endShape = function
   (mode,
   vertices,
@@ -56,20 +61,43 @@ p5.RendererGL.prototype.endShape = function
   shapeKind){
   var gl = this.GL;
   var vertPositions = [];
-  var vertCols = [];
+  //https://en.wikipedia.org/wiki/Barycentric_coordinate_system
+  //used for wireframe calculation in shader
+  var vertBaryCentric = [];
+  var centricMat = new p5.Matrix('mat3');
+  var vertStrokeCols = [];
+  var vertFillCols = [];
   for (var i = 0; i < vertices.length; i++) {
     //splice x,y,z components into vertPositions arr
     vertPositions.push(
       vertices[i][0],
       vertices[i][1],
       vertices[i][2]);
-    //@TODO handle vertCols here
+    vertStrokeCols.push(
+      vertices[i][vertices.length-1][0],
+      vertices[i][vertices.length-1][1],
+      vertices[i][vertices.length-1][2],
+      vertices[i][vertices.length-1][3]
+      );
+    vertFillCols.push(
+      vertices[i][vertices.length-2][0],
+      vertices[i][vertices.length-2][1],
+      vertices[i][vertices.length-2][2],
+      vertices[i][vertices.length-2][3]
+      );
+    var bcRowIndex = (i % 3) * 3;
+    var bcRow = centricMat.mat3.slice(bcRowIndex, bcRowIndex+3);
+    vertBaryCentric.push(bcRow[0], bcRow[1], bcRow[2]);
   }
   this._bindImmediateBuffers(
     vertPositions,
-    vertCols);
+    vertBaryCentric,
+    vertStrokeCols,
+    vertFillCols);
   if(mode){
-    if(this.drawMode === 'fill'){
+    //@todo this is error prone because calls to stroke
+    //will result in this.drawMode === 'stroke'.
+    if(this._doFill){
       switch(this.immediateMode.shapeMode){
         case constants.LINE_STRIP:
           this.immediateMode.shapeMode = constants.TRIANGLE_FAN;
@@ -114,11 +142,13 @@ p5.RendererGL.prototype.endShape = function
  *                          vertex positions
  * @return {p5.RendererGL}
  */
-p5.RendererGL.prototype._bindImmediateBuffers = function(vertices, colors){
+p5.RendererGL.prototype._bindImmediateBuffers =
+function(vertices, baryCentrics, strokeColors, fillColors){
   this._setDefaultCamera();
   var gl = this.GL;
   var shaderKey = this._getCurShaderId();
   var shaderProgram = this.mHash[shaderKey];
+
   //vertex position Attribute
   shaderProgram.vertexPositionAttribute =
     gl.getAttribLocation(shaderProgram, 'aPosition');
@@ -128,11 +158,30 @@ p5.RendererGL.prototype._bindImmediateBuffers = function(vertices, colors){
     gl.ARRAY_BUFFER, new Float32Array(vertices), gl.DYNAMIC_DRAW);
   gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute,
     3, gl.FLOAT, false, 0, 0);
+  //vertex position Attribute
+  shaderProgram.barycentricAttribute =
+    gl.getAttribLocation(shaderProgram, 'aBaryCentric');
+  gl.enableVertexAttribArray(shaderProgram.barycentricAttribute);
+  gl.bindBuffer(gl.ARRAY_BUFFER, this.immediateMode.barycentricBuffer);
+  gl.bufferData(
+    gl.ARRAY_BUFFER, new Float32Array(baryCentrics), gl.DYNAMIC_DRAW);
+  gl.vertexAttribPointer(shaderProgram.barycentricAttribute,
+    3, gl.FLOAT, false, 0, 0);
 
-  shaderProgram.vertexColorAttribute =
-    gl.getAttribLocation(shaderProgram, 'aVertexColor');
-  gl.enableVertexAttribArray(shaderProgram.vertexColorAttribute);
-  gl.bindBuffer(gl.ARRAY_BUFFER, this.immediateMode.colorBuffer);
+  shaderProgram.vertexStrokeColorAttribute =
+    gl.getAttribLocation(shaderProgram, 'aVertexStrokeColor');
+  gl.enableVertexAttribArray(shaderProgram.vertexStrokeColorAttribute);
+  gl.bindBuffer(gl.ARRAY_BUFFER, this.immediateMode.strokeColorBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER,
+    new Float32Array(strokeColors),gl.DYNAMIC_DRAW);
+  gl.vertexAttribPointer(shaderProgram.vertexStrokeColorAttribute,
+    4, gl.FLOAT, false, 0, 0);
+
+  shaderProgram.vertexFillColorAttribute =
+    gl.getAttribLocation(shaderProgram, 'aVertexFillColor');
+  gl.enableVertexAttribArray(shaderProgram.vertexFillColorAttribute);
+  gl.bindBuffer(gl.ARRAY_BUFFER, this.immediateMode.fillColorBuffer);
+
   gl.bufferData(gl.ARRAY_BUFFER,
     new Float32Array(colors),gl.DYNAMIC_DRAW);
   gl.vertexAttribPointer(shaderProgram.vertexColorAttribute,

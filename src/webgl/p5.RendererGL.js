@@ -77,6 +77,7 @@ p5.RendererGL.prototype._initContext = function() {
       var gl = this.drawingContext;
       gl.enable(gl.DEPTH_TEST);
       gl.depthFunc(gl.LEQUAL);
+      gl.getExtension('OES_standard_derivatives');
       gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     }
   } catch (er) {
@@ -311,7 +312,7 @@ p5.RendererGL.prototype.fill = function(v1, v2, v3, a) {
   //see material.js for more info on color blending in webgl
   var colors = this._applyColorBlend.apply(this, arguments);
   this.curFillColor = colors;
-  this.drawMode = 'fill';
+  this._doFill = true;
   if(this.isImmediateDrawing){
     shaderProgram =
     this._getShader('immediateVert','vertexColorFrag');
@@ -333,21 +334,20 @@ p5.RendererGL.prototype.fill = function(v1, v2, v3, a) {
   }
   return this;
 };
-p5.RendererGL.prototype.stroke = function(r, g, b, a) {
-  var color = this._pInst.color.apply(this._pInst, arguments);
-  var colorNormalized = color._array;
-  this.curStrokeColor = colorNormalized;
-  this.drawMode = 'stroke';
+p5.RendererGL.prototype.stroke = function(v1, v2, v3, a) {
+  //see material.js for more info on color blending in webgl
+  var colors = this._applyColorBlend(v1,v2,v3,a);
+  this.curStrokeColor = colors;
+  this._doStroke = true;
   return this;
 };
 
-//@TODO
-p5.RendererGL.prototype._strokeCheck = function(){
-  if(this.drawMode === 'stroke'){
-    throw new Error(
-      'stroke for shapes in 3D not yet implemented, use fill for now :('
-    );
-  }
+p5.RendererGL.prototype._getFill = function(){
+  return this.curFillColor;
+};
+
+p5.RendererGL.prototype._getStroke = function(){
+  return this.curStrokeColor;
 };
 
 /**

@@ -570,20 +570,8 @@ p5.prototype.vertex = function() {
   vert[3] = 0;
   vert[4] = 0;
   vert[5] = 0;
-  //_getFill&Stroke currently only implemented in 2d
-  //these should be replaced by colors instead of const styles
-  //@TODO: need to create _getFillColor & _getStrokeColor in RendererGL
-  //then pass the returned vals into the last 2 elements of vert
-  //after that, I need to collapse the color vals as normalized floats in
-  //p5.RendererGL.Immediate.
   vert[6] = this._renderer._getFill();
   vert[7] = this._renderer._getStroke();
-  if(!this._renderer.isP3D){
-    vert.isVert = true;
-    if (moveTo) {
-      vert.moveTo = moveTo;
-    }
-  }
   if (isContour) {
     if (contourVertices.length === 0) {
       vert.moveTo = true;
