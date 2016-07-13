@@ -36,16 +36,10 @@ p5.RendererGL.prototype.beginShape = function(mode){
   //if we haven't yet initialized our
   //immediateMode buffers, create them now!
   if(this.immediateMode.vertexBuffer === undefined){
-<<<<<<< Updated upstream
-    this.immediateMode.vertexBuffer = this.GL.createBuffer();
-    this.immediateMode.colorBuffer = this.GL.createBuffer();
-=======
     this.immediateMode.vertexBuffer = gl.createBuffer();
     this.immediateMode.barycentricBuffer = gl.createBuffer();
     this.immediateMode.strokeColorBuffer = gl.createBuffer();
     this.immediateMode.fillColorBuffer = gl.createBuffer();
-
->>>>>>> Stashed changes
   }
   this.isImmediateDrawing = true;
   return this;
@@ -181,9 +175,8 @@ function(vertices, baryCentrics, strokeColors, fillColors){
     gl.getAttribLocation(shaderProgram, 'aVertexFillColor');
   gl.enableVertexAttribArray(shaderProgram.vertexFillColorAttribute);
   gl.bindBuffer(gl.ARRAY_BUFFER, this.immediateMode.fillColorBuffer);
-
   gl.bufferData(gl.ARRAY_BUFFER,
-    new Float32Array(colors),gl.DYNAMIC_DRAW);
+    new Float32Array(fillColors),gl.DYNAMIC_DRAW);
   gl.vertexAttribPointer(shaderProgram.vertexColorAttribute,
     4, gl.FLOAT, false, 0, 0);
   //matrix
