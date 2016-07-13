@@ -98,7 +98,17 @@ p5.Font.prototype.textBounds = function(str, x, y, fontSize, options) {
   y = y !== undefined ? y : 0;
   fontSize = fontSize || this.parent._renderer._textSize;
 
-  var result = this.cache[cacheKey('textBounds', str, x, y, fontSize)];
+  // Check cache for existing bounds. Take into consideration the text alignment
+  // settings. Default alignment should match opentype's origin: left-aligned &
+  // alphabetic baseline.
+  var p = (options && options.renderer && options.renderer._pInst) ||
+    this.parent,
+    ctx = p._renderer.drawingContext,
+    alignment = ctx.textAlign || constants.LEFT,
+    baseline = ctx.textBaseline || constants.BASELINE;
+  var result = this.cache[cacheKey('textBounds', str, x, y, fontSize, alignment,
+    baseline)];
+
   if (!result) {
 
     var xCoords = [], yCoords = [], self = this,
@@ -125,10 +135,15 @@ p5.Font.prototype.textBounds = function(str, x, y, fontSize, options) {
         }
       });
 
-    minX = Math.max(0, Math.min.apply(null, xCoords));
+    // fix to #1409 (not sure why these max() functions were here)
+    /*minX = Math.max(0, Math.min.apply(null, xCoords));
     minY = Math.max(0, Math.min.apply(null, yCoords));
     maxX = Math.max(0, Math.max.apply(null, xCoords));
-    maxY = Math.max(0, Math.max.apply(null, yCoords));
+    maxY = Math.max(0, Math.max.apply(null, yCoords));*/
+    minX = Math.min.apply(null, xCoords);
+    minY = Math.min.apply(null, yCoords);
+    maxX = Math.max.apply(null, xCoords);
+    maxY = Math.max.apply(null, yCoords);
 
     result = {
       x: minX,
@@ -138,7 +153,14 @@ p5.Font.prototype.textBounds = function(str, x, y, fontSize, options) {
       advance: minX - x
     };
 
-    this.cache[cacheKey('textBounds', str, x, y, fontSize)] = result;
+    // Bounds are now calculated, so shift the x & y to match alignment settings
+    var textWidth = result.w + result.advance;
+    var pos = this._handleAlignment(p, ctx, str, result.x, result.y, textWidth);
+    result.x = pos.x;
+    result.y = pos.y;
+
+    this.cache[cacheKey('textBounds', str, x, y, fontSize, alignment,
+      baseline)] = result;
   }
   //else console.log('cache-hit');
 
@@ -220,7 +242,8 @@ p5.Font.prototype._getGlyphs = function(str) {
  */
 p5.Font.prototype._getPath = function(line, x, y, options) {
 
-  var p = this.parent,
+  var p = (options && options.renderer && options.renderer._pInst) ||
+    this.parent,
     ctx = p._renderer.drawingContext,
     pos = this._handleAlignment(p, ctx, line, x, y);
 
@@ -341,7 +364,7 @@ p5.Font.prototype._renderPath = function(line, x, y, options) {
   } else {
 
     //pos = handleAlignment(p, ctx, line, x, y);
-    pdata = this._getPath(line, x, y, pg._textSize, options).commands;
+    pdata = this._getPath(line, x, y, options).commands;
   }
 
   ctx.beginPath();
@@ -404,12 +427,13 @@ p5.Font.prototype._scale = function(fontSize) {
     this.parent._renderer._textSize);
 };
 
-p5.Font.prototype._handleAlignment = function(p, ctx, line, x, y) {
+p5.Font.prototype._handleAlignment = function(p, ctx, line, x, y, textWidth) {
+  var fontSize = p._renderer._textSize,
+    textAscent = this._textAscent(fontSize),
+    textDescent = this._textDescent(fontSize);
 
-  var textWidth = this._textWidth(line),
-    textAscent = this._textAscent(),
-    textDescent = this._textDescent(),
-    textHeight = textAscent + textDescent;
+  textWidth = textWidth !== undefined ? textWidth :
+    this._textWidth(line, fontSize);
 
   if (ctx.textAlign === constants.CENTER) {
     x -= textWidth / 2;
@@ -418,9 +442,9 @@ p5.Font.prototype._handleAlignment = function(p, ctx, line, x, y) {
   }
 
   if (ctx.textBaseline === constants.TOP) {
-    y += textHeight;
+    y += textAscent;
   } else if (ctx.textBaseline === constants._CTX_MIDDLE) {
-    y += textHeight / 2 - textDescent;
+    y += textAscent / 2;
   } else if (ctx.textBaseline === constants.BOTTOM) {
     y -= textDescent;
   }
