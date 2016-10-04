@@ -1,7 +1,7 @@
 'use strict';
 
 var p5 = require('../core/core');
-var shader = require('./shader');
+var Shader = require('./shader');
 require('../core/p5.Renderer');
 require('./p5.Matrix');
 var uMVMatrixStack = [];
@@ -44,11 +44,6 @@ p5.RendererGL = function(elt, pInst, isMainCanvas) {
    * Uniforms object. This is a key-value pair for storing data associated with
    * various uniforms. Use _getUniform and _setUniform to manipulate this.
    */
-  this._uniforms = Object.create(null);
-  this._setUniform('uResolution', RESOLUTION);
-  this._setUniform('uModelViewMatrix', new p5.Matrix());
-  this._setUniform('uProjectionMatrix', new p5.Matrix());
-  this._setUniform('uNormalMatrix', new p5.Matrix('mat3'));
   //TODO: Possibly Normal Matrix doesn't work in immediate mode? Investigate.
 
   //Geometry & Material hashes
@@ -59,7 +54,13 @@ p5.RendererGL = function(elt, pInst, isMainCanvas) {
   this.shaderDefines = {};
 
   //Built-in shaders
-  this.currentShader = shader.default;
+  this.currentShader = Shader.default;
+
+  this.currentShader
+    .setUniform('uResolution', RESOLUTION)
+    .setUniform('uModelViewMatrix', new p5.Matrix())
+    .setUniform('uProjectionMatrix', new p5.Matrix())
+    .setUniform('uNormalMatrix', new p5.Matrix('mat3'));
 
   //Counter for keeping track of which texture slots are currently occupied
   this.texCount = 0;
@@ -102,16 +103,18 @@ p5.RendererGL.prototype._setDefaultCamera = function(){
   if(this._curCamera === null){
     var _w = this.width;
     var _h = this.height;
-
-    this._setUniform('uProjectionMatrix', p5.Matrix.identity());
-    this._getUniform('uProjectionMatrix').perspective(60 / 180 * Math.PI,
-                                                      _w / _h, 0.1, 100);
+    var pMatrix = p5.Matrix
+      .identity()
+      .perspective(60 / 180 * Math.PI, _w / _h, 0.001, 100);
+    // this._setUniform('uProjectionMatrix', p5.Matrix.identity());
+    this._setAllUniforms('uProjectionMatrix', pMatrix);
     this._curCamera = 'default';
   }
 };
 
 p5.RendererGL.prototype._update = function() {
-  this._setUniform('uModelViewMatrix', p5.Matrix.identity());
+  // this._setUniform('uModelViewMatrix', p5.Matrix.identity());
+  this._setAllUniforms('uModelViewMatrix', p5.Matrix.identity());
   this.translate(0, 0, -(this.height / 2) / Math.tan(Math.PI * 30 / 180));
   this.ambientLightCount = 0;
   this.directionalLightCount = 0;
@@ -169,15 +172,15 @@ p5.RendererGL.prototype._compileShader = function(shader) {
     var shaderProgram = gl.createProgram();
 
     for(var i = 0; i < 2; ++i) {
-      var shader = gl.createShader(shaderTypes[i]);
-      gl.shaderSource(shader, flagPrefix + shaders[i]);
-      gl.compileShader(shader);
-      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      var shdr = gl.createShader(shaderTypes[i]);
+      gl.shaderSource(shdr, flagPrefix + shaders[i]);
+      gl.compileShader(shdr);
+      if (!gl.getShaderParameter(shdr, gl.COMPILE_STATUS)) {
         console.log('Yikes! An error occurred compiling the shaders:' +
-          gl.getShaderInfoLog(shader));
+          gl.getShaderInfoLog(shdr));
         return null;
       }
-      gl.attachShader(shaderProgram, shader);
+      gl.attachShader(shaderProgram, shdr);
     }
 
     gl.linkProgram(shaderProgram);
@@ -187,7 +190,6 @@ p5.RendererGL.prototype._compileShader = function(shader) {
 
     this.mHash[mId] = shaderProgram;
   }
-  
   this.curShaderId = mId;
   return this.mHash[this.curShaderId];
 };
@@ -195,66 +197,17 @@ p5.RendererGL.prototype._compileShader = function(shader) {
 //////////////////////////////////////////////
 // UNIFORMS
 //////////////////////////////////////////////
-
 /**
- * @param {String} name The name of the uniform.
+ * Sets all material uniforms in the material hash to a specified value.
+ * Used for model,view,projection matrix resetting.
+ * @private
  */
-p5.RendererGL.prototype._getUniform = function(uName)
+p5.RendererGL.prototype._setAllUniforms = function()
 {
-  return this._uniforms[uName].data;
-};
-
-/**
- * @param {String} name The name of the uniform.
- * @param {any} data The data to set in the uniform. This can take many
- *                   different forms. See p5.Shader.setUniform for full
- *                   documentation.
- */
-p5.RendererGL.prototype._setUniform = function()
-{
-  var args = new Array(arguments.length);
-  for (var i = 0; i < args.length; ++i) {
-    args[i] = arguments[i];
-  }
-  var uObj = this._uniforms;
-  var uName = args.shift();
-
-  var uType;
-  if(typeof args[args.length - 1] === 'string') {
-    uType = args.pop();
-  }
-  var uData = args.length === 1 ? args[0] : args;
-
-  if(typeof uData === 'number') { // If this is a floating point number
-    uType = uType || '1f';
-  } else if(Array.isArray(uData) && uData.length <= 4) {
-    uType = uData.length + 'fv';
-  } else if(uData instanceof p5.Vector) {
-    uType = '3fv';
-  } else if(uData instanceof p5.Color) {
-    uType = '4fv';
-  } else if(uData instanceof p5.Matrix) {
-    if('mat3' in uData) {
-      uType = 'Matrix3fv';
-    } else {
-      uType = 'Matrix4fv';
+  for (var id in this.mHash) {
+    if(this.mHash.hasOwnProperty(id)){
+      this.mHash[id].setUniform(Array.prototype.slice.call(arguments, 1));
     }
-  } else if(uData instanceof p5.Graphics ||
-            uData instanceof p5.Image ||
-            (typeof p5.MediaElement !== 'undefined' &&
-             uData instanceof p5.MediaElement)) {
-    uType = 'texture';
-  } else {
-    console.error('Didn\'t recognize the type of this uniform.');
-  }
-
-  if(!(uName in uObj)) {
-    uObj[uName] = {};
-    uObj[uName].type = uType;
-    uObj[uName].data = uData;
-    uObj[uName].location = [];
-  } else {
-    uObj[uName].data = uData;
   }
 };
 
@@ -346,8 +299,11 @@ p5.RendererGL.prototype.fill = function(v1, v2, v3, a) {
   this.curFillColor = colors;
   this.drawMode = 'fill';
 
-  this.shaderDefines.USE_LIGHTS = false;
-  this._setUniform('uMaterialColor', colors);
+  // this.shaderDefines.USE_LIGHTS = false;
+  // this._setUniform('uMaterialColor', colors);
+  
+  this.currentShader.setDefine('USE_LIGHTS', false);
+  this.currentShader.setUniform('uMaterialColor', colors);
   return this;
 };
 p5.RendererGL.prototype.stroke = function(r, g, b, a) {
@@ -406,7 +362,8 @@ p5.RendererGL.prototype.resize = function(w,h) {
     this._curCamera = null;
     this._setDefaultCamera();
   }
-  this._setUniform('resolution', this.width, this.height);
+  this._setAllUniforms('resolution', this.width, this.height);
+  // this._setUniform('resolution', this.width, this.height);
 };
 
 /**
@@ -439,7 +396,7 @@ p5.RendererGL.prototype.translate = function(x, y, z) {
   x = x / RESOLUTION;
   y = -y / RESOLUTION;
   z = z / RESOLUTION;
-  this._getUniform('uModelViewMatrix').translate([x,y,z]);
+  this.currentShader.getUniform('uModelViewMatrix').translate([x,y,z]);
   return this;
 };
 
@@ -451,14 +408,15 @@ p5.RendererGL.prototype.translate = function(x, y, z) {
  * @return {this}   [description]
  */
 p5.RendererGL.prototype.scale = function(x,y,z) {
-  this._getUniform('uModelViewMatrix').scale([x,y,z]);
+  this.currentShader.getUniform('uModelViewMatrix').scale([x,y,z]);
   return this;
 };
 
 p5.RendererGL.prototype.rotate = function(rad, axis){
-  this._getUniform('uModelViewMatrix').rotate(rad, axis);
-  this._getUniform('uNormalMatrix').inverseTranspose(
-                                      this._getUniform('uModelViewMatrix'));
+  this.currentShader.getUniform('uModelViewMatrix')
+    .rotate(rad, axis);
+  this.currentShader.getUniform('uNormalMatrix')
+    .inverseTranspose(this.currentShader.getUniform('uModelViewMatrix'));
   return this;
 };
 
@@ -482,7 +440,7 @@ p5.RendererGL.prototype.rotateZ = function(rad) {
  * MV Matrix stack.
  */
 p5.RendererGL.prototype.push = function() {
-  uMVMatrixStack.push(this._getUniform('uModelViewMatrix').copy());
+  uMVMatrixStack.push(this.currentShader.getUniform('uModelViewMatrix').copy());
 };
 
 /**
@@ -493,11 +451,13 @@ p5.RendererGL.prototype.pop = function() {
   if (uMVMatrixStack.length === 0) {
     throw new Error('Invalid popMatrix!');
   }
-  this._setUniform('uModelViewMatrix', uMVMatrixStack.pop());
+  // this._setUniform('uModelViewMatrix', uMVMatrixStack.pop());
+  this._setAllUniforms('uModelViewMatrix', uMVMatrixStack.pop());
 };
 
 p5.RendererGL.prototype.resetMatrix = function() {
-  this._setUniform('uModelViewMatrix', p5.Matrix.identity());
+  // this._setUniform('uModelViewMatrix', p5.Matrix.identity());
+  this._setAllUniforms('uModelViewMatrix', p5.Matrix.identity());
   this.translate(0, 0, -800);
   return this;
 };
