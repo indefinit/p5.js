@@ -306,10 +306,6 @@ p5.RendererGL.prototype.fill = function(v1, v2, v3, a) {
   var colors = this._applyColorBlend.apply(this, arguments);
   this.curFillColor = colors;
   this.drawMode = 'fill';
-
-  // this.shaderDefines.USE_LIGHTS = false;
-  // this._setUniform('uMaterialColor', colors);
-  
   this.currentShader.setDefine('USE_LIGHTS', false);
   this.currentShader.setUniform('uMaterialColor', colors);
   return this;

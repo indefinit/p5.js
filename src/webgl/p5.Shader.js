@@ -1,7 +1,7 @@
 'use strict';
 
 var p5 = require('../core/core');
-var renderer = require('./p5.RendererGL');
+require('./p5.RendererGL');
 
 /**
  * p5 Shader class
