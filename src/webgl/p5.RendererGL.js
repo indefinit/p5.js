@@ -68,6 +68,7 @@ p5.RendererGL = function(elt, pInst, isMainCanvas) {
   //default drawing is done in Retained Mode
   this.isImmediateDrawing = false;
   this.immediateMode = {};
+  //TODO: These should maybe be uniforms?
   this.curFillColor = [0.5,0.5,0.5,1.0];
   this.curStrokeColor = [0.5,0.5,0.5,1.0];
   this.pointSize = 5.0;//default point/stroke
@@ -116,6 +117,7 @@ p5.RendererGL.prototype._update = function() {
   // this._setUniform('uModelViewMatrix', p5.Matrix.identity());
   this._setAllUniforms('uModelViewMatrix', p5.Matrix.identity());
   this.translate(0, 0, -(this.height / 2) / Math.tan(Math.PI * 30 / 180));
+  //TODO: Check how Processing lighting updates on each loop
   this.ambientLightCount = 0;
   this.directionalLightCount = 0;
   this.pointLightCount = 0;
@@ -201,6 +203,11 @@ p5.RendererGL.prototype._compileShader = function(shader) {
  * Sets all material uniforms in the material hash to a specified value.
  * Used for model,view,projection matrix resetting.
  * @private
+ * @param {String} name The name of the uniform.
+ * @param {any} data The data to set in the uniform. This can take many
+ *                   different forms. See p5.Shader.setUniform for full
+ *                   documentation.
+ * @param {String} type Optional type clarification
  */
 p5.RendererGL.prototype._setAllUniforms = function()
 {
@@ -214,19 +221,19 @@ p5.RendererGL.prototype._setAllUniforms = function()
 /**
  * Apply saved uniforms to specified shader.
  */
-p5.RendererGL.prototype._applyUniforms = function(shaderKey, uniformsObj)
+p5.RendererGL.prototype._applyUniforms = function(uniformsObj)
 {
   var gl = this.GL;
-  var shaderProgram = this.mHash[shaderKey];
+  var shaderProgram = this.mHash[this.curShaderId];
   var uObj = uniformsObj || this._uniforms;
 
   for(var uName in uObj) {
     //TODO: This caching might break if one shader is used w/ multiple instances
-    if(!(shaderKey in uObj[uName].location)) {
-      uObj[uName].location[shaderKey] =
+    if(!(this.curShaderId in uObj[uName].location)) {
+      uObj[uName].location[this.curShaderId] =
           gl.getUniformLocation(shaderProgram, uName);
     }
-    var location = uObj[uName].location[shaderKey];
+    var location = uObj[uName].location[this.curShaderId];
     var data;
 
     var type = uObj[uName].type;
@@ -291,6 +298,7 @@ p5.RendererGL.prototype._applyUniforms = function(shaderKey, uniformsObj)
  * red canvas
  *
  */
+//TODO: Fill should maybe also set the current shader as the basic material?
 p5.RendererGL.prototype.fill = function(v1, v2, v3, a) {
   // var gl = this.GL;
   // var shaderProgram;
